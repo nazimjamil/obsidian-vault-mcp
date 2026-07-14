@@ -11,6 +11,33 @@ Two containers, built from the same image:
 
 This is designed to run on something small and always-on, like a Raspberry Pi.
 
+## How it flows
+
+```mermaid
+flowchart LR
+    ObsidianSync[("Obsidian Sync\n(cloud)")]
+    Client["MCP Client\n(LLM / agent)"]
+
+    subgraph Host["Host (e.g. Raspberry Pi)"]
+        subgraph SyncContainer["obsidian-sync container"]
+            OB["ob sync --continuous"]
+        end
+        Vault[("./vault\n(shared volume)")]
+        subgraph MCPContainer["obsidian-mcp container"]
+            MCPVault["mcpvault"] --> Gateway["supergateway\n:3000"]
+        end
+    end
+
+    ObsidianSync <-->|sync| OB
+    OB <-->|read/write| Vault
+    Vault <-->|read/write| MCPVault
+    Client <-->|MCP over HTTP| Gateway
+```
+
+- `obsidian-sync` keeps `./vault` up to date with your Obsidian Sync account.
+- `obsidian-mcp` reads/writes the same `./vault` folder and exposes it to any MCP client over the network.
+- The two containers never talk to each other directly — the shared volume is the only link.
+
 ## Prerequisites
 
 - Docker and Docker Compose
