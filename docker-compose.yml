@@ -1,0 +1,29 @@
+services:
+  obsidian-sync:
+    build: .
+    container_name: obsidian-headless-sync
+    restart: unless-stopped
+    user: "${UID}:${GID}"
+    environment:
+      - HOME=/home/node
+    volumes:
+      - ./config:/home/node/.config
+      - ./vault:/home/node/vault
+
+  obsidian-mcp:
+    build: .
+    container_name: obsidian-mcp-server
+    restart: unless-stopped
+    user: "${UID}:${GID}"
+    entrypoint: [
+      "supergateway",
+      "--port", "3000",
+      "--outputTransport", "streamableHttp",
+      "--stdio", "npx -y @bitbonsai/mcpvault@latest /data/vault"
+    ]
+    environment:
+      - OBSIDIAN_API_KEY=${OBSIDIAN_API_KEY}
+    volumes:
+      - ./vault:/data/vault
+    ports:
+      - "3000:3000"
