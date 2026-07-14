@@ -40,3 +40,7 @@ This is designed to run on something small and always-on, like a Raspberry Pi.
 - `obsidian-sync` keeps `./vault` current in the background; `obsidian-mcp` just reads/writes files under that same folder, so the two stay consistent without any extra glue.
 - Never commit `.env`, `./vault`, or `./config` — they contain your credentials and personal notes. This repo's `.gitignore` already excludes them.
 - If you rotate your API key, update `.env` and run `docker compose up -d` again to pick it up.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
