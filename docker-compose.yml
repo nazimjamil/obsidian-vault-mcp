@@ -15,10 +15,19 @@ services:
     container_name: obsidian-mcp-server
     restart: unless-stopped
     user: "${UID}:${GID}"
+    # --stateful + --sessionTimeout: without these, supergateway's default
+    # stateless stdio->StreamableHttp mode spawns a fresh `mcpvault` child
+    # process per request and never reaps it (no session object exists to
+    # attach a timeout to). Over days that leaked hundreds of MB of RAM into
+    # orphaned node processes and eventually forced a full Pi reboot.
+    # --stateful reuses one child per session; --sessionTimeout kills an
+    # idle session (and its child process) after 10 minutes of inactivity.
     entrypoint: [
       "supergateway",
       "--port", "3000",
       "--outputTransport", "streamableHttp",
+      "--stateful",
+      "--sessionTimeout", "600000",
       "--stdio", "npx -y @bitbonsai/mcpvault@latest /data/vault"
     ]
     environment:
@@ -27,3 +36,7 @@ services:
       - ./vault:/data/vault
     ports:
       - "3000:3000"
+    # Defense in depth: even if a future leak slips past --stateful, cap
+    # this container's memory so Docker restarts it long before it can
+    # swap the whole Pi into a stall.
+    mem_limit: 768m
