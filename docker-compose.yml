@@ -32,6 +32,15 @@ services:
     ]
     environment:
       - OBSIDIAN_API_KEY=${OBSIDIAN_API_KEY}
+      # UID:GID below has no /etc/passwd entry in this image, so HOME
+      # defaults to "/" and npm's `npx -y @bitbonsai/mcpvault` (spawned
+      # per session by supergateway) fails EACCES trying to mkdir
+      # /.npm on the root-owned filesystem — every session's child dies
+      # before it can answer `initialize`, which reads from the MCP
+      # client as a connection timeout. /tmp is world-writable (1777)
+      # regardless of UID, so pointing HOME there gives npm somewhere
+      # it can actually create a cache.
+      - HOME=/tmp
     volumes:
       - ./vault:/data/vault
     ports:
